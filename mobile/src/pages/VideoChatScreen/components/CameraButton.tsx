@@ -15,7 +15,7 @@ export default function CameraButton({state, onPress}: Props) {
       onPress={onPress}
       style={styles.container}>
       <IonIcon
-        name={state ? 'videocam-off' : 'videocam'}
+        name={state ? 'videocam' : 'videocam-off'}
         size={26}
         color={colors.whiteColor}
       />

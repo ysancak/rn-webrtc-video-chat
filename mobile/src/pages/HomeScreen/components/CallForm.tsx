@@ -6,7 +6,7 @@ import {callUserIdSchema} from '@/lib/validations';
 import {useForm, Controller} from 'react-hook-form';
 import {z} from 'zod';
 import {StyleSheet} from 'react-native';
-import {useSocket} from '@/providers/SocketProvider';
+import {useVideoCall} from '@/providers/VideoCallProvider';
 
 export default function CallForm() {
   const {
@@ -16,7 +16,7 @@ export default function CallForm() {
   } = useForm<z.infer<typeof callUserIdSchema>>({
     resolver: zodResolver(callUserIdSchema),
   });
-  const {startCall} = useSocket();
+  const {startCall} = useVideoCall();
 
   const handleStartCall = (values: z.infer<typeof callUserIdSchema>) => {
     startCall(values.id);

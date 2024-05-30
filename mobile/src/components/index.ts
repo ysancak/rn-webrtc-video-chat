@@ -5,6 +5,7 @@ import TextInput from './TextInput';
 import KeyboardAvoidingView from './KeyboardAvoidingView';
 import AcceptCallButton from './AcceptCallButton';
 import RejectCallButton from './RejectCallButton';
+import LoadingWrapper from './LoadingWrapper';
 
 export {
   View,
@@ -14,4 +15,5 @@ export {
   KeyboardAvoidingView,
   AcceptCallButton,
   RejectCallButton,
+  LoadingWrapper,
 };

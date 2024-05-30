@@ -15,7 +15,7 @@ export default function MicrophoneButton({state, onPress}: Props) {
       onPress={onPress}
       style={styles.container}>
       <IonIcon
-        name={state ? 'mic-off' : 'mic-off'}
+        name={state ? 'mic' : 'mic-off'}
         size={26}
         color={colors.whiteColor}
       />

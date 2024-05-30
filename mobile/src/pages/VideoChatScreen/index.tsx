@@ -1,56 +1,53 @@
-import {RejectCallButton, View} from '@/components';
+import {LoadingWrapper, RejectCallButton, View} from '@/components';
 import React from 'react';
 import {SafeAreaView, StyleSheet} from 'react-native';
-import useCall from '@/hooks/useCall';
 import {RTCView} from 'react-native-webrtc';
 import CameraButton from './components/CameraButton';
 import MicrophoneButton from './components/MicrophoneButton';
+import {useVideoCall} from '@/providers/VideoCallProvider';
 
 export default function VideoChatScreen() {
   const {
+    isLoading,
     localStream,
     remoteStream,
     endCall,
-    isLocalCameraActive,
-    isLocalMicActive,
-    toggleLocalMicrophoneState,
-    toggleLocalVideoState,
-  } = useCall();
+    isMicrophoneOn,
+    isCameraOn,
+    toggleMicrophone,
+    toggleCamera,
+  } = useVideoCall();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.remoteStream}>
-        {remoteStream && (
-          <RTCView
-            streamURL={remoteStream.toURL()}
-            mirror={false}
-            objectFit="cover"
-            style={styles.remoteStreamVideo}
-          />
-        )}
-      </View>
-      <View style={styles.localStream}>
-        {localStream && (
-          <RTCView
-            streamURL={localStream.toURL()}
-            mirror={false}
-            objectFit="cover"
-            style={styles.localStreamVideo}
-          />
-        )}
-      </View>
-      <View style={styles.floatingButtonsContainer}>
-        <CameraButton
-          state={isLocalCameraActive}
-          onPress={toggleLocalVideoState}
-        />
-        <RejectCallButton onPress={endCall} />
-        <MicrophoneButton
-          state={isLocalMicActive}
-          onPress={toggleLocalMicrophoneState}
-        />
-      </View>
-    </SafeAreaView>
+    <LoadingWrapper isLoading={isLoading}>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.remoteStream}>
+          {remoteStream && (
+            <RTCView
+              streamURL={remoteStream.toURL()}
+              mirror={false}
+              objectFit="cover"
+              style={styles.remoteStreamVideo}
+            />
+          )}
+        </View>
+        <View style={styles.localStream}>
+          {localStream && (
+            <RTCView
+              streamURL={localStream.toURL()}
+              mirror={false}
+              objectFit="cover"
+              style={styles.localStreamVideo}
+            />
+          )}
+        </View>
+        <View style={styles.floatingButtonsContainer}>
+          <CameraButton state={isCameraOn} onPress={toggleCamera} />
+          <RejectCallButton onPress={endCall} />
+          <MicrophoneButton state={isMicrophoneOn} onPress={toggleMicrophone} />
+        </View>
+      </SafeAreaView>
+    </LoadingWrapper>
   );
 }
 

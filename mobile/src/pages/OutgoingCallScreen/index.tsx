@@ -1,13 +1,13 @@
 import {RejectCallButton, Text, View} from '@/components';
 import useRoute from '@/hooks/useRoute';
 import {colors} from '@/lib';
-import {useSocket} from '@/providers/SocketProvider';
+import {useVideoCall} from '@/providers/VideoCallProvider';
 import React from 'react';
 import {SafeAreaView, StyleSheet} from 'react-native';
 
 export default function OutgoingCallScreen() {
   const route = useRoute();
-  const {rejectCall} = useSocket();
+  const {rejectCall} = useVideoCall();
 
   const rejectButtonHandler = () => {
     rejectCall(route.params?.userId);
