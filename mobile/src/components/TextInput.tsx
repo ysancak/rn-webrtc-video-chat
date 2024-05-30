@@ -41,6 +41,6 @@ const style = StyleSheet.create({
     paddingHorizontal: 16,
   },
   errorText: {
-    color: colors.offlineColor,
+    color: colors.redColor,
   },
 });

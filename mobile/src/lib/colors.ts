@@ -12,7 +12,5 @@ export const descriptionColor = '#464654';
 export const disabledColor = '#B8B8C1';
 export const disabledForegroundColor = '#464654';
 
-export const onlineColor = '#10b981';
-export const offlineColor = '#f43f5e';
-
-export const callButtonColor = '#10b981';
+export const greenColor = '#10b981';
+export const redColor = '#f43f5e';

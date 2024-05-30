@@ -1,16 +1,11 @@
 import React, {useMemo} from 'react';
 import {Image, StyleSheet, TouchableOpacity} from 'react-native';
 import IonIcon from 'react-native-vector-icons/Ionicons';
-import useNavigation from '@/hooks/useNavigation';
 import {colors} from '@/lib';
 import {Text, View} from '@/components';
 
 export default function FriendListItem({id, fullName, avatar, status}) {
-  const navigation = useNavigation();
-
-  const startCallOnPressHandler = () => {
-    navigation.navigate('CallScreen');
-  };
+  const startCallOnPressHandler = () => {};
 
   const isOnline = useMemo(() => status === 'online', [status]);
 
@@ -23,9 +18,7 @@ export default function FriendListItem({id, fullName, avatar, status}) {
   }, [isOnline]);
 
   const renderCallButton = useMemo(() => {
-    const buttonBgColor = isOnline
-      ? colors.callButtonColor
-      : colors.disabledColor;
+    const buttonBgColor = isOnline ? colors.greenColor : colors.disabledColor;
     return (
       <TouchableOpacity
         activeOpacity={0.8}
@@ -92,7 +85,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   callButton: {
-    backgroundColor: colors.callButtonColor,
+    backgroundColor: colors.greenColor,
     width: 42,
     height: 42,
     borderRadius: 99,
