@@ -21,12 +21,14 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isMicrophoneOn, setIsMicrophoneOn] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const peerConnection = useRef<RTCPeerConnection | null>(null);
+  const iceCandidatesBuffer = useRef<RTCIceCandidate[]>([]);
 
   const toUser = useMemo(() => {
+    console.log({activeCall, user});
     if (activeCall) {
       return activeCall.fromUser === user.id
         ? activeCall.toUser
@@ -47,9 +49,11 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
   }, [activeCall]);
 
   useEffect(() => {
-    socket?.on('offer', handleOffer);
-    socket?.on('answer', handleAnswer);
-    socket?.on('ice_candidate', handleIceCandidateEvent);
+    if (activeCall) {
+      socket?.on('offer', handleOffer);
+      socket?.on('answer', handleAnswer);
+      socket?.on('ice_candidate', handleIceCandidateEvent);
+    }
     socket?.on('incoming_call', handleIncomingCall);
     socket?.on('call_accepted', handleCallAccepted);
     socket?.on('call_rejected', handleCallRejected);
@@ -61,7 +65,7 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
       socket?.off('call_accepted', handleCallAccepted);
       socket?.off('call_rejected', handleCallRejected);
     };
-  }, [socket]);
+  }, [socket, activeCall]);
 
   const setupPeerConnection = () => {
     peerConnection.current = new RTCPeerConnection({
@@ -126,6 +130,7 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
         await peerConnection.current.setRemoteDescription(
           new RTCSessionDescription(sdp),
         );
+        console.log(peerConnection.current.remoteDescription);
         if (peerConnection.current.remoteDescription?.type === 'offer') {
           const answer = await peerConnection.current.createAnswer();
           await peerConnection.current.setLocalDescription(answer);
@@ -169,9 +174,13 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
   }) => {
     try {
       if (peerConnection.current) {
-        await peerConnection.current.addIceCandidate(
-          new RTCIceCandidate(candidate),
-        );
+        if (peerConnection.current.remoteDescription) {
+          await peerConnection.current.addIceCandidate(
+            new RTCIceCandidate(candidate),
+          );
+        } else {
+          iceCandidatesBuffer.current.push(new RTCIceCandidate(candidate));
+        }
       }
     } catch (error) {
       console.error('Error adding received ice candidate', error);

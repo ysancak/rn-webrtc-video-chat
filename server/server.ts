@@ -42,17 +42,18 @@ io.on('connection', (socket: Socket) => {
   });
 
   socket.on('offer', ({ toUser, sdp }) => {
-    console.log(`Received offer from ${socket.id} to ${toUser}`);
+    console.log(`Received offer to ${toUser}`);
     io.to(toUser).emit('offer', { sdp });
   });
 
   socket.on('answer', ({ toUser, sdp }) => {
-    console.log(`Received answer from ${socket.id} to ${toUser}`);
+    console.log(`Received answer to ${toUser}`);
     io.to(toUser).emit('answer', { sdp });
+
   });
 
   socket.on('ice_candidate', ({ toUser, candidate }) => {
-    console.log(`Received ICE candidate from ${socket.id} to ${toUser}`);
+    console.log(`Received ICE candidate to ${toUser}`);
     io.to(toUser).emit('ice_candidate', { candidate });
   });
 
