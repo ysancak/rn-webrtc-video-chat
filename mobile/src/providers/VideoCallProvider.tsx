@@ -131,7 +131,9 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
           await peerConnection.current.setLocalDescription(answer);
           socket?.emit('answer', {toUser: toUser, sdp: answer});
         }
-      } catch {}
+      } catch (error) {
+        console.error('Error handling offer:', error);
+      }
     }
   };
 
@@ -141,18 +143,22 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
         await peerConnection.current.setRemoteDescription(
           new RTCSessionDescription(sdp),
         );
-      } catch {}
+      } catch (error) {
+        console.error('Error handling answer:', error);
+      }
     }
   };
 
   const handleConnectionChange = () => {
-    if (
-      peerConnection.current?.connectionState === 'connecting' ||
-      peerConnection.current?.connectionState === 'failed'
-    ) {
-      setIsLoading(true);
-    } else {
-      setIsLoading(false);
+    switch (peerConnection.current?.connectionState) {
+      case 'connecting':
+        setIsLoading(true);
+        break;
+      case 'failed':
+        endCall();
+        break;
+      default:
+        setIsLoading(false);
     }
   };
 

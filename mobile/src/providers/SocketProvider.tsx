@@ -9,10 +9,6 @@ import {useSelector} from 'react-redux';
 import io, {Socket} from 'socket.io-client';
 import {selectUser} from '@/store/reducers/user/selectors';
 
-interface SocketContextType {
-  socket: Socket | null;
-}
-
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export const SocketProvider = ({children}: {children: ReactNode}) => {

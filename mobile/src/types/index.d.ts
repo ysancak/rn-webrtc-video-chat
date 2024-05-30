@@ -34,6 +34,10 @@ interface CallContextType {
   toggleCamera: () => void;
 }
 
+interface SocketContextType {
+  socket: Socket | null;
+}
+
 type UserStatus = 'online' | 'offline';
 
 type User = {
