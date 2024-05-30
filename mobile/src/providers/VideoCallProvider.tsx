@@ -28,7 +28,6 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
   const iceCandidatesBuffer = useRef<RTCIceCandidate[]>([]);
 
   const toUser = useMemo(() => {
-    console.log({activeCall, user});
     if (activeCall) {
       return activeCall.fromUser === user.id
         ? activeCall.toUser
@@ -49,11 +48,9 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
   }, [activeCall]);
 
   useEffect(() => {
-    if (activeCall) {
-      socket?.on('offer', handleOffer);
-      socket?.on('answer', handleAnswer);
-      socket?.on('ice_candidate', handleIceCandidateEvent);
-    }
+    socket?.on('ice_candidate', handleIceCandidateEvent);
+    socket?.on('offer', handleOffer);
+    socket?.on('answer', handleAnswer);
     socket?.on('incoming_call', handleIncomingCall);
     socket?.on('call_accepted', handleCallAccepted);
     socket?.on('call_rejected', handleCallRejected);
@@ -92,7 +89,7 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
     try {
       const stream = await mediaDevices.getUserMedia({
         audio: true,
-        video: {frameRate: 60, facingMode: 'user'},
+        video: {frameRate: 30, facingMode: 'user'},
       });
       setLocalStream(stream);
       stream
@@ -130,7 +127,6 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
         await peerConnection.current.setRemoteDescription(
           new RTCSessionDescription(sdp),
         );
-        console.log(peerConnection.current.remoteDescription);
         if (peerConnection.current.remoteDescription?.type === 'offer') {
           const answer = await peerConnection.current.createAnswer();
           await peerConnection.current.setLocalDescription(answer);
