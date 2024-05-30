@@ -8,6 +8,7 @@ import React, {
 import {useSelector} from 'react-redux';
 import io, {Socket} from 'socket.io-client';
 import {selectUser} from '@/store/reducers/user/selectors';
+import {SOCKET_SERVER} from '@/lib/api';
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
@@ -16,7 +17,7 @@ export const SocketProvider = ({children}: {children: ReactNode}) => {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const socketConnection = io('http://192.168.1.88:3000');
+    const socketConnection = io(SOCKET_SERVER);
     setSocket(socketConnection);
 
     socketConnection.emit('register', user.id);
