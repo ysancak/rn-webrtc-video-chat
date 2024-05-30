@@ -41,6 +41,21 @@ io.on('connection', (socket: Socket) => {
     io.to(toUser).emit('call_rejected', { fromUser });
   });
 
+  socket.on('offer', ({ toUser, sdp }) => {
+    console.log(`Received offer from ${socket.id} to ${toUser}`);
+    io.to(toUser).emit('offer', { sdp });
+  });
+
+  socket.on('answer', ({ toUser, sdp }) => {
+    console.log(`Received answer from ${socket.id} to ${toUser}`);
+    io.to(toUser).emit('answer', { sdp });
+  });
+
+  socket.on('ice_candidate', ({ toUser, candidate }) => {
+    console.log(`Received ICE candidate from ${socket.id} to ${toUser}`);
+    io.to(toUser).emit('ice_candidate', { candidate });
+  });
+
   socket.on('disconnect', () => {
     console.log('A user disconnected:', socket.id);
   });
