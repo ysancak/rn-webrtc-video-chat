@@ -560,6 +560,7 @@
 				DEVELOPMENT_TEAM = U9HL266T5V;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = WebRTCChatDemo/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "WebRTC Demo";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -587,6 +588,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U9HL266T5V;
 				INFOPLIST_FILE = WebRTCChatDemo/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "WebRTC Demo";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
