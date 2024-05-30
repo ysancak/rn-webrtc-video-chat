@@ -10,20 +10,7 @@ import {useSelector} from 'react-redux';
 import {useSocket} from '@/providers/SocketProvider';
 import {selectUser} from '@/store/reducers/user/selectors';
 import useNavigation from '@/hooks/useNavigation';
-
-interface CallContextType {
-  localStream: MediaStream | null;
-  remoteStream: MediaStream | null;
-  isLoading: boolean;
-  startCall: (toUser: string) => void;
-  acceptCall: (toUser: string) => void;
-  rejectCall: (toUser: string) => void;
-  endCall: () => void;
-  isMicrophoneOn: boolean;
-  isCameraOn: boolean;
-  toggleMicrophone: () => void;
-  toggleCamera: () => void;
-}
+import {RTCSessionDescriptionInit} from 'react-native-webrtc/lib/typescript/RTCSessionDescription';
 
 const CallContext = React.createContext<CallContextType | undefined>(undefined);
 
@@ -34,7 +21,7 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isMicrophoneOn, setIsMicrophoneOn] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const peerConnection = useRef<RTCPeerConnection | null>(null);
@@ -48,148 +35,161 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
   }, [activeCall, user]);
 
   useEffect(() => {
-    const setupPeerConnection = () => {
-      peerConnection.current = new RTCPeerConnection({
-        iceServers: [
-          {urls: 'stun:stun.l.google.com:19302'},
-          {urls: 'stun:stun1.l.google.com:19302'},
-          {urls: 'stun:stun2.l.google.com:19302'},
-        ],
-      });
-
-      peerConnection.current.addEventListener('icecandidate', event => {
-        if (event.candidate) {
-          socket?.emit('ice_candidate', {
-            toUser: toUser,
-            candidate: event.candidate,
-          });
-        }
-      });
-
-      peerConnection.current.addEventListener('track', event => {
-        setRemoteStream(event.streams[0]);
-      });
-
-      peerConnection.current.addEventListener('negotiationneeded', async () => {
-        if (peerConnection.current) {
-          const offer = await peerConnection.current.createOffer({});
-          await peerConnection.current.setLocalDescription(offer);
-          socket?.emit('offer', {
-            toUser: toUser,
-            sdp: offer,
-          });
-        }
-      });
-    };
-
-    const startLocalStream = async () => {
-      setIsLoading(true);
-      try {
-        const stream = await mediaDevices.getUserMedia({
-          audio: true,
-          video: {frameRate: 60, facingMode: 'user'},
-        });
-        setLocalStream(stream);
-
-        if (peerConnection.current) {
-          stream.getTracks().forEach(track => {
-            peerConnection.current?.addTrack(track, stream);
-          });
-        }
-      } catch (error) {
-        console.error('Error accessing media devices.', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (activeCall) {
       setupPeerConnection();
       startLocalStream();
     }
-
     return () => {
       localStream?.getTracks().forEach(track => track.stop());
       peerConnection.current?.close();
       peerConnection.current = null;
     };
-  }, [activeCall, socket]);
+  }, [activeCall]);
 
   useEffect(() => {
-    socket?.on('offer', async ({sdp}) => {
-      if (peerConnection.current) {
-        setIsLoading(true);
-        try {
-          await peerConnection.current.setRemoteDescription(
-            new RTCSessionDescription(sdp),
-          );
-          if (peerConnection.current.remoteDescription?.type === 'offer') {
-            const answer = await peerConnection.current.createAnswer();
-            await peerConnection.current.setLocalDescription(answer);
-            socket?.emit('answer', {
-              toUser: toUser,
-              sdp: answer,
-            });
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    });
-
-    socket?.on('answer', async ({sdp}) => {
-      if (peerConnection.current) {
-        setIsLoading(true);
-        try {
-          await peerConnection.current.setRemoteDescription(
-            new RTCSessionDescription(sdp),
-          );
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    });
-
-    socket?.on('ice_candidate', async ({candidate}) => {
-      try {
-        if (peerConnection.current) {
-          await peerConnection.current.addIceCandidate(
-            new RTCIceCandidate(candidate),
-          );
-        }
-      } catch (error) {
-        console.error('Error adding received ice candidate', error);
-      }
-    });
-
-    socket?.on('incoming_call', (data: {fromUser: string}) => {
-      navigation.navigate('IncomingCallScreen', {userId: data.fromUser});
-    });
-
-    socket?.on('call_accepted', (data: {fromUser: string}) => {
-      setActiveCall({
-        fromUser: data.fromUser,
-        toUser: user.id,
-        startDate: new Date(),
-        status: 'LIVE',
-      });
-      navigation.navigate('VideoChatScreen');
-    });
-
-    socket?.on('call_rejected', () => {
-      setActiveCall(null);
-      navigation.navigate('HomeScreen');
-    });
-
+    socket?.on('offer', handleOffer);
+    socket?.on('answer', handleAnswer);
+    socket?.on('ice_candidate', handleIceCandidateEvent);
+    socket?.on('incoming_call', handleIncomingCall);
+    socket?.on('call_accepted', handleCallAccepted);
+    socket?.on('call_rejected', handleCallRejected);
     return () => {
-      socket?.off('offer');
-      socket?.off('answer');
-      socket?.off('ice_candidate');
-      socket?.off('incoming_call');
-      socket?.off('call_accepted');
-      socket?.off('call_rejected');
+      socket?.off('offer', handleOffer);
+      socket?.off('answer', handleAnswer);
+      socket?.off('ice_candidate', handleIceCandidateEvent);
+      socket?.off('incoming_call', handleIncomingCall);
+      socket?.off('call_accepted', handleCallAccepted);
+      socket?.off('call_rejected', handleCallRejected);
     };
   }, [socket]);
+
+  const setupPeerConnection = () => {
+    peerConnection.current = new RTCPeerConnection({
+      iceServers: [
+        {urls: 'stun:stun.l.google.com:19302'},
+        {urls: 'stun:stun1.l.google.com:19302'},
+        {urls: 'stun:stun2.l.google.com:19302'},
+      ],
+    });
+
+    peerConnection.current.addEventListener('icecandidate', handleIceCandidate);
+    peerConnection.current.addEventListener('track', handleTrackEvent);
+    peerConnection.current.addEventListener(
+      'negotiationneeded',
+      handleNegotiationNeeded,
+    );
+    peerConnection.current.addEventListener(
+      'connectionstatechange',
+      handleConnectionChange,
+    );
+  };
+
+  const startLocalStream = async () => {
+    try {
+      const stream = await mediaDevices.getUserMedia({
+        audio: true,
+        video: {frameRate: 60, facingMode: 'user'},
+      });
+      setLocalStream(stream);
+      stream
+        .getTracks()
+        .forEach(track => peerConnection.current?.addTrack(track, stream));
+    } catch (error) {
+      console.error('Error accessing media devices.', error);
+    }
+  };
+
+  const handleIceCandidate = (event: any) => {
+    if (event.candidate) {
+      socket?.emit('ice_candidate', {
+        toUser: toUser,
+        candidate: event.candidate,
+      });
+    }
+  };
+
+  const handleTrackEvent = (event: any) => {
+    setRemoteStream(event.streams[0]);
+  };
+
+  const handleNegotiationNeeded = async () => {
+    if (peerConnection.current) {
+      const offer = await peerConnection.current.createOffer({});
+      await peerConnection.current.setLocalDescription(offer);
+      socket?.emit('offer', {toUser: toUser, sdp: offer});
+    }
+  };
+
+  const handleOffer = async ({sdp}: {sdp: RTCSessionDescriptionInit}) => {
+    if (peerConnection.current) {
+      try {
+        await peerConnection.current.setRemoteDescription(
+          new RTCSessionDescription(sdp),
+        );
+        if (peerConnection.current.remoteDescription?.type === 'offer') {
+          const answer = await peerConnection.current.createAnswer();
+          await peerConnection.current.setLocalDescription(answer);
+          socket?.emit('answer', {toUser: toUser, sdp: answer});
+        }
+      } catch {}
+    }
+  };
+
+  const handleAnswer = async ({sdp}: {sdp: RTCSessionDescriptionInit}) => {
+    if (peerConnection.current) {
+      try {
+        await peerConnection.current.setRemoteDescription(
+          new RTCSessionDescription(sdp),
+        );
+      } catch {}
+    }
+  };
+
+  const handleConnectionChange = () => {
+    if (
+      peerConnection.current?.connectionState === 'connecting' ||
+      peerConnection.current?.connectionState === 'failed'
+    ) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+    }
+  };
+
+  const handleIceCandidateEvent = async ({
+    candidate,
+  }: {
+    candidate: RTCIceCandidate;
+  }) => {
+    try {
+      if (peerConnection.current) {
+        await peerConnection.current.addIceCandidate(
+          new RTCIceCandidate(candidate),
+        );
+      }
+    } catch (error) {
+      console.error('Error adding received ice candidate', error);
+    }
+  };
+
+  const handleIncomingCall = (data: {fromUser: string}) => {
+    navigation.navigate('IncomingCallScreen', {userId: data.fromUser});
+  };
+
+  const handleCallAccepted = (data: {fromUser: string}) => {
+    setActiveCall({
+      fromUser: data.fromUser,
+      toUser: user.id,
+      startDate: new Date(),
+      status: 'LIVE',
+    });
+    navigation.navigate('VideoChatScreen');
+  };
+
+  const handleCallRejected = () => {
+    setActiveCall(null);
+    navigation.navigate('HomeScreen');
+  };
 
   const startCall = (to: string) => {
     socket?.emit('start_call', {fromUser: user.id, toUser: to});
