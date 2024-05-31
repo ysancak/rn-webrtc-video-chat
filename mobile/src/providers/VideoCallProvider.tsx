@@ -10,7 +10,6 @@ import {useSelector} from 'react-redux';
 import {useSocket} from '@/providers/SocketProvider';
 import {selectUser} from '@/store/reducers/user/selectors';
 import useNavigation from '@/hooks/useNavigation';
-import {RTCSessionDescriptionInit} from 'react-native-webrtc/lib/typescript/RTCSessionDescription';
 
 const CallContext = React.createContext<CallContextType | undefined>(undefined);
 
@@ -121,7 +120,7 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
     }
   };
 
-  const handleOffer = async ({sdp}: {sdp: RTCSessionDescriptionInit}) => {
+  const handleOffer = async ({sdp}: {sdp: RTCSessionDescription}) => {
     if (peerConnection.current) {
       try {
         await peerConnection.current.setRemoteDescription(
@@ -138,7 +137,7 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
     }
   };
 
-  const handleAnswer = async ({sdp}: {sdp: RTCSessionDescriptionInit}) => {
+  const handleAnswer = async ({sdp}: {sdp: RTCSessionDescription}) => {
     if (peerConnection.current) {
       try {
         await peerConnection.current.setRemoteDescription(
