@@ -24,7 +24,6 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
   const [isMicrophoneOn, setIsMicrophoneOn] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const peerConnection = useRef<RTCPeerConnection | null>(null);
-  const iceCandidatesBuffer = useRef<RTCIceCandidate[]>([]);
 
   const toUser = useMemo(() => {
     if (activeCall) {
@@ -169,13 +168,9 @@ export const VideoCallProvider = ({children}: {children: React.ReactNode}) => {
   }) => {
     try {
       if (peerConnection.current) {
-        if (peerConnection.current.remoteDescription) {
-          await peerConnection.current.addIceCandidate(
-            new RTCIceCandidate(candidate),
-          );
-        } else {
-          iceCandidatesBuffer.current.push(new RTCIceCandidate(candidate));
-        }
+        await peerConnection.current.addIceCandidate(
+          new RTCIceCandidate(candidate),
+        );
       }
     } catch (error) {
       console.error('Error adding received ice candidate', error);
